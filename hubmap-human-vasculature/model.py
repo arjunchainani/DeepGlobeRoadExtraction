@@ -5,7 +5,6 @@ The original paper for SegNet can be found online, and it details the architectu
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchsummary import summary
 
 class ConvolutionLayers(nn.Module):
     def __init__(self, in_features: int, out_features: int, num_layers: int) -> None:
@@ -96,4 +95,4 @@ class SegNet(nn.Module):
 
 def test_model():
     model = SegNet(in_features=3, out_features=1)
-    summary(model, input_size=(3, 512, 512), device='cpu')
+    print(model)

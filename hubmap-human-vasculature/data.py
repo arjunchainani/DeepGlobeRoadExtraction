@@ -29,7 +29,95 @@ def find_categories(masks: t.List) -> t.List:
     
     return instance_types
 
-def plot_masks(mask: t.Dict, id: str, stack_image: bool = False) -> np.ndarray:
+def plot_segmented_masks(mask: t.Dict):
+    '''
+    def get_cartesian_coords(coords, img_height):
+    coords_array = np.array(coords).squeeze()
+    xs = coords_array[:, 0]
+    ys = -coords_array[:, 1] + img_height
+    
+    return xs, ys
+
+def plot_annotated_image(image_dict, scale_factor: int = 1.0) -> None:
+    #array = tiff.imread(CFG.img_path_template.format(image_dict["id"]))
+    array = tiff.imread(f'/kaggle/input/hubmap-hacking-the-human-vasculature/train/{image_dict["id"]}.tif')
+    
+    img_example = Image.fromarray(array)
+    annotations = image_dict["annotations"]
+    
+    # create figure
+    fig = go.Figure()
+
+    # constants
+    img_width = img_example.size[0]
+    img_height = img_example.size[1]
+    
+
+    # add invisible scatter trace
+    fig.add_trace(
+        go.Scatter(
+            x=[0, img_width],
+            y=[0, img_height],
+            mode="markers",
+            marker_opacity=0
+        )
+    )
+
+    # configure axes
+    fig.update_xaxes(
+        visible=False,
+        range=[0, img_width]
+    )
+
+    fig.update_yaxes(
+        visible=False,
+        range=[0, img_height],
+        # the scaleanchor attribute ensures that the aspect ratio stays constant
+        scaleanchor="x"
+    )
+
+    # add image
+    fig.add_layout_image(dict(
+        x=0,
+        sizex=img_width,
+        y=img_height,
+        sizey=img_height,
+        xref="x", yref="y",
+        opacity=1.0,
+        layer="below",
+        sizing="stretch",
+        source=img_example
+    ))
+    
+    # add polygons
+    for annotation in annotations:
+        name = annotation["type"]
+        xs, ys = get_cartesian_coords(annotation["coordinates"], img_height)
+        fig.add_trace(go.Scatter(
+            x=xs, y=ys, fill="toself",
+            name=name,
+            hovertemplate="%{name}",
+            mode='lines'
+        ))
+
+    # configure other layout
+    fig.update_layout(
+        width=img_width * scale_factor,
+        height=img_height * scale_factor,
+        margin={"l": 0, "r": 0, "t": 0, "b": 0},
+        showlegend=False
+    )
+
+    # disable the autosize on double click because it adds unwanted margins around the image
+    # and finally show figure
+    fig.show(config={'doubleClick': 'reset'})
+plot_annotated_image(tiles_dicts[0])
+make s
+    '''
+    
+    pass
+
+def plot_annotations(mask: t.Dict, id: str, stack_image: bool = False) -> np.ndarray:
     '''
     The coordinates of the instances in the masks are stored as long arrays.
     This is just a visualization function that turns them into images for easy comparison with model predictions.
