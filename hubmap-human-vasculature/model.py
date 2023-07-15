@@ -6,9 +6,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class ConvolutionLayers(nn.Module):
+class ConvBlock(nn.Module):
     def __init__(self, in_features: int, out_features: int, num_layers: int) -> None:
-        super(ConvolutionLayers, self).__init__()
+        super(ConvBlock, self).__init__()
 
         self.convs = nn.ModuleList()
 
@@ -44,12 +44,14 @@ class ConvolutionLayers(nn.Module):
             image,
             kernel_size=2,
             stride=2,
-            padding=None,
+            padding=(0),
             return_indices=True
         )
     
     def forward(self, x):
-        x = self.convs(x)
+        for module in self.convs:
+            x = module(x)
+
         pooled, indices = self._max_pool_with_indices(x)
         return pooled, indices
     
@@ -86,13 +88,30 @@ class SegNet(nn.Module):
         for (layer, channels), filters in zip(enumerate(self.channel_arch), self.num_filters):
             if layer == 0:
                 self.down_sampling.append(
-                    ConvolutionLayers(self.in_features, channels, num_layers=filters)
+                    ConvBlock(self.in_features, channels, num_layers=filters)
                 )
             else:
                 self.down_sampling.append(
-                    ConvolutionLayers(self.channel_arch[layer - 1], channels, num_layers=filters)
+                    ConvBlock(self.channel_arch[layer - 1], channels, num_layers=filters)
                 )
+        
+    def forward(self, x):
+        pooling_indices = [] # Keeps track of the pooling indices from the max-pool layer in each convolution block
+        
+        # Passing input through the downsampling layers
+        for module in self.down_sampling:
+            x, indices = module(x)
+            pooling_indices.append(x)
+            # print(x.shape)
+        
+        for index, item in enumerate(pooling_indices):
+            print(f'Indices[{index}].shape: {torch.as_tensor(item).shape}')
+
 
 def test_model():
+    input = torch.randn((1, 3, 512, 512))
     model = SegNet(in_features=3, out_features=1)
-    print(model)
+    model(input)
+
+if __name__ == '__main__':
+    test_model()
