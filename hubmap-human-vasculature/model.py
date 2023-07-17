@@ -10,13 +10,17 @@ class ConvBlock(nn.Module):
     def __init__(self, in_features: int, out_features: int, num_layers: int) -> None:
         super(ConvBlock, self).__init__()
 
+        self.in_features = in_features
+        self.out_features = out_features
+        self.num_layers = num_layers
+
         self.convs = nn.ModuleList()
 
         # Initial convolution layer - maps in_features to out_features
         self.convs.append(
             nn.Sequential(
-                nn.Conv2d(in_features, out_features, kernel_size=3, stride=1, padding=1, bias=False),
-                nn.BatchNorm2d(out_features),
+                nn.Conv2d(self.in_features, self.out_features, kernel_size=3, stride=1, padding=1, bias=False),
+                nn.BatchNorm2d(self.out_features),
                 nn.ReLU(inplace=True)
             )
         )
@@ -25,8 +29,8 @@ class ConvBlock(nn.Module):
             # The later convolution layers in each specific block keep the same number of features but just densify the image
             self.convs.append(
                 nn.Sequential(
-                    nn.Conv2d(out_features, out_features, kernel_size=3, stride=1, padding=1, bias=False),
-                    nn.BatchNorm2d(out_features), 
+                    nn.Conv2d(self.out_features, self.out_features, kernel_size=3, stride=1, padding=1, bias=False),
+                    nn.BatchNorm2d(self.out_features), 
                     nn.ReLU(inplace=True)
                 )
             )
@@ -54,13 +58,49 @@ class ConvBlock(nn.Module):
 
         pooled, indices = self._max_pool_with_indices(x)
         return pooled, indices
-    
+
+class Upsample(nn.Module):
+    def __init__(self, in_features: int, out_features: int, new_img_size: tuple) -> None:
+        self.in_features = in_features
+        self.out_features = out_features
+        self.new_img_size = new_img_size
+
+    @staticmethod
+    def _map_indices(image: torch.Tensor, new_img_size: tuple) -> torch.Tensor:
+        '''
+        Maps the pooled indices to a larger image using their old positions
+        Any extra spots in the image will initially be filled with zeros and then densified later on through convolutions
+        '''
+        new_img =  torch.zeros(new_img_size)
+
+        # This section converts the indices returned by F.max_pool2d_with_indices into a format that we can use to map pixels in our image
+        coors = []
+
+        dim = new_img_size[0]
+        index_map = torch.squeeze(index_map)
+        index_map = torch.flatten(index_map).tolist()
+
+        for index in index_map:
+            x = index // dim
+            y = index % dim
+            coors.append(tuple(x, y))
+
+
+    @staticmethod
+    def _get_max_index(indices: torch.Tensor) -> int:
+        '''
+        Just an additional method for testing
+        Returns the pooling index of any pixel in the pooled image
+        '''
+        indices = torch.flatten(indices).tolist()
+        return max(indices)
+
 class SegNet(nn.Module):
     def __init__(
             self, 
             in_features: int, 
             out_features: int, 
-            channel_arch=[64, 128, 256, 512],
+            channel_arch=[64, 128, 256, 512, 1024],
             num_filters=[2, 2, 3, 3, 3],
         ):
         '''
@@ -94,7 +134,9 @@ class SegNet(nn.Module):
                 self.down_sampling.append(
                     ConvBlock(self.channel_arch[layer - 1], channels, num_layers=filters)
                 )
-        
+
+        # print(self.down_sampling)
+
     def forward(self, x):
         pooling_indices = [] # Keeps track of the pooling indices from the max-pool layer in each convolution block
         
@@ -102,10 +144,10 @@ class SegNet(nn.Module):
         for module in self.down_sampling:
             x, indices = module(x)
             pooling_indices.append(x)
-            # print(x.shape)
+            print(x.shape)
         
-        for index, item in enumerate(pooling_indices):
-            print(f'Indices[{index}].shape: {torch.as_tensor(item).shape}')
+        # for index, item in enumerate(pooling_indices):
+            # print(f'Indices[{index}].shape: {torch.as_tensor(item).shape}')
 
 
 def test_model():
