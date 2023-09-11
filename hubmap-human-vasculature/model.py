@@ -83,7 +83,7 @@ class Upsample(nn.Module):
         for index in index_map:
             x = index // dim
             y = index % dim
-            coors.append(tuple(x, y))
+            coors.append((x, y))
 
 
     @staticmethod
@@ -122,7 +122,7 @@ class SegNet(nn.Module):
         self.down_sampling = nn.ModuleList()
         self.up_sampling = nn.ModuleList()
 
-        self.pooling_indices = []
+        self.pooling_indices = []  # Keeps track of the pooling indices from the max-pool layer in each convolution block
 
         # Downsampling part of SegNet
         for (layer, channels), filters in zip(enumerate(self.channel_arch), self.num_filters):
@@ -137,13 +137,11 @@ class SegNet(nn.Module):
 
         # print(self.down_sampling)
 
-    def forward(self, x):
-        pooling_indices = [] # Keeps track of the pooling indices from the max-pool layer in each convolution block
-        
+    def forward(self, x):        
         # Passing input through the downsampling layers
         for module in self.down_sampling:
             x, indices = module(x)
-            pooling_indices.append(x)
+            self.pooling_indices.append(indices)
             print(x.shape)
         
         # for index, item in enumerate(pooling_indices):
