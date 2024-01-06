@@ -66,12 +66,12 @@ class Upsample(nn.Module):
         self.new_img_size = new_img_size
 
     @staticmethod
-    def _map_indices(image: torch.Tensor, new_img_size: tuple) -> torch.Tensor:
+    def _map_indices(image: torch.Tensor, new_img_size: tuple, index_map: torch.Tensor) -> torch.Tensor:
         '''
         Maps the pooled indices to a larger image using their old positions
         Any extra spots in the image will initially be filled with zeros and then densified later on through convolutions
         '''
-        new_img =  torch.zeros(new_img_size)
+        new_img = torch.zeros(new_img_size)
 
         # This section converts the indices returned by F.max_pool2d_with_indices into a format that we can use to map pixels in our image
         coors = []
@@ -84,7 +84,6 @@ class Upsample(nn.Module):
             x = index // dim
             y = index % dim
             coors.append((x, y))
-
 
     @staticmethod
     def _get_max_index(indices: torch.Tensor) -> int:
@@ -142,10 +141,11 @@ class SegNet(nn.Module):
         for module in self.down_sampling:
             x, indices = module(x)
             self.pooling_indices.append(indices)
-            print(x.shape)
+            # print(x.shape)
         
-        # for index, item in enumerate(pooling_indices):
-            # print(f'Indices[{index}].shape: {torch.as_tensor(item).shape}')
+        # for index, item in enumerate(self.pooling_indices):
+        #     print(f'Indices[{index}].shape: {torch.as_tensor(item).shape}')
+        print(self.pooling_indices[0].shape)
 
 
 def test_model():
