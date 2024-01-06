@@ -84,6 +84,9 @@ class Upsample(nn.Module):
             x = index // dim
             y = index % dim
             coors.append((x, y))
+        
+        print(coors[0:5])
+        print(f'Len: {len(coors)}')
 
     @staticmethod
     def _get_max_index(indices: torch.Tensor) -> int:
@@ -149,9 +152,12 @@ class SegNet(nn.Module):
 
 
 def test_model():
-    input = torch.randn((1, 3, 512, 512))
-    model = SegNet(in_features=3, out_features=1)
-    model(input)
+    # input = torch.randn((1, 3, 512, 512))
+    # model = SegNet(in_features=3, out_features=1)
+    # model(input)
+
+    # Misc testing
+    Upsample._map_indices(torch.randn((1, 64, 256, 256)), (1, 64, 512, 512), torch.randint(1, 262144, (1, 64, 256, 256)))
 
 if __name__ == '__main__':
     test_model()
