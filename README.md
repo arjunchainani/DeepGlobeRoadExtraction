@@ -3,4 +3,4 @@
 This repository contains entries to Kaggle machine learning competitions I've participated in.
 
 ## HuBMAP: Hacking the Human Vasculature
-Includes a custom implementation of the SegNet model
+Includes a custom implementation of the SegNet model (updated 1/16/27)
