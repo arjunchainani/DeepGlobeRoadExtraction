@@ -7,12 +7,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_features: int, out_features: int, num_layers: int) -> None:
+    def __init__(self, in_features: int, out_features: int, num_conv_layers: int) -> None:
         super(ConvBlock, self).__init__()
 
         self.in_features = in_features
         self.out_features = out_features
-        self.num_layers = num_layers
+        self.num_conv_layers = num_conv_layers
 
         self.convs = nn.ModuleList()
 
@@ -25,7 +25,7 @@ class ConvBlock(nn.Module):
             )
         )
 
-        for i in range(num_layers - 1):
+        for _ in range(num_conv_layers - 1):
             # The later convolution layers in each specific block keep the same number of features but just densify the image
             self.convs.append(
                 nn.Sequential(
@@ -59,11 +59,26 @@ class ConvBlock(nn.Module):
         pooled, indices = self._max_pool_with_indices(x)
         return pooled, indices
 
-class Upsample(nn.Module):
-    def __init__(self, in_features: int, out_features: int, new_img_size: tuple) -> None:
-        self.in_features = in_features
-        self.out_features = out_features
-        self.new_img_size = new_img_size
+class Upsample(ConvBlock):
+    def __init__(self, in_features: int, out_features: int, num_conv_layers: int) -> None:
+        super(Upsample, self).__init__(in_features, out_features, num_conv_layers)
+
+        self.indices = []
+        self.unpool = nn.MaxUnpool2d(kernel_size=2, stride=2)
+
+        self.convs.insert(0, self.unpool)
+        self.convs = self.convs[:(len(self.convs) - 1)]
+
+    # Overrides from ConvBlock class
+    def forward(self, x, indices):
+        self.indices = indices
+        for module_num, module in enumerate(self.convs):
+            if module_num == 0:
+                x = module(x, self.indices)
+            else:
+                x = module(x)
+
+        return x
 
     @staticmethod
     def _map_indices(image: torch.Tensor, new_img_size: tuple, index_map: torch.Tensor) -> torch.Tensor:
@@ -130,34 +145,59 @@ class SegNet(nn.Module):
         for (layer, channels), filters in zip(enumerate(self.channel_arch), self.num_filters):
             if layer == 0:
                 self.down_sampling.append(
-                    ConvBlock(self.in_features, channels, num_layers=filters)
+                    ConvBlock(self.in_features, channels, num_conv_layers=filters)
                 )
             else:
                 self.down_sampling.append(
-                    ConvBlock(self.channel_arch[layer - 1], channels, num_layers=filters)
+                    ConvBlock(self.channel_arch[layer - 1], channels, num_conv_layers=filters)
                 )
 
-        # print(self.down_sampling)
+        self.up_channel_arch = list(reversed(self.channel_arch))
+        self.up_num_filters = list(reversed(self.num_filters))
+        self.reverse_indices = list(reversed(self.pooling_indices))
+
+        print(self.up_channel_arch)
+
+        # Upsampling part of SegNet
+        for (layer, channels), filters in zip(enumerate(self.up_channel_arch), self.up_num_filters):
+            if layer == len(self.up_channel_arch) - 1: # Needs to be altered to be the last layer and use out_features instead
+                self.up_sampling.append(
+                    Upsample(self.in_features, channels, num_conv_layers=filters)
+                )
+            else:
+                self.up_sampling.append(
+                    Upsample(self.channel_arch[layer], channels, num_conv_layers=filters)
+                )
+
+        # print(self.up_sampling)
 
     def forward(self, x):        
         # Passing input through the downsampling layers
-        for module in self.down_sampling:
-            x, indices = module(x)
+        for down in self.down_sampling:
+            x, indices = down(x)
             self.pooling_indices.append(indices)
-            # print(x.shape)
-        
+            print(x.shape)
+
+        self.reverse_indices = list(reversed(self.pooling_indices))
+
+        for up, indices in zip(self.up_sampling, self.reverse_indices):
+            # print(up)
+            x = up(x, indices)
+            print(x.shape)
+
         # for index, item in enumerate(self.pooling_indices):
         #     print(f'Indices[{index}].shape: {torch.as_tensor(item).shape}')
-        print(self.pooling_indices[0].shape)
+        # print(self.pooling_indices[0].shape)
 
 
 def test_model():
-    # input = torch.randn((1, 3, 512, 512))
-    # model = SegNet(in_features=3, out_features=1)
-    # model(input)
+    input = torch.randn((1, 3, 512, 512))
+    model = SegNet(in_features=3, out_features=1)
+    model(input)
 
     # Misc testing
-    Upsample._map_indices(torch.randn((1, 64, 256, 256)), (1, 64, 512, 512), torch.randint(1, 262144, (1, 64, 256, 256)))
+    # Upsample._map_indices(torch.randn((1, 64, 256, 256)), (1, 64, 512, 512), torch.randint(1, 262144, (1, 64, 256, 256)))
+    # test = Upsample(1, 3, (3, 512, 512), 3)
 
 if __name__ == '__main__':
     test_model()
