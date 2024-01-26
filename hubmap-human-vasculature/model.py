@@ -66,8 +66,7 @@ class Upsample(ConvBlock):
         self.indices = []
         self.unpool = nn.MaxUnpool2d(kernel_size=2, stride=2)
 
-        self.convs.insert(0, self.unpool)
-        self.convs = self.convs[:(len(self.convs) - 1)]
+        self.convs.insert(index=0, module=self.unpool)
 
     # Overrides from ConvBlock class
     def forward(self, x, indices):
@@ -156,48 +155,39 @@ class SegNet(nn.Module):
         self.up_num_filters = list(reversed(self.num_filters))
         self.reverse_indices = list(reversed(self.pooling_indices))
 
-        print(self.up_channel_arch)
-
         # Upsampling part of SegNet
         for (layer, channels), filters in zip(enumerate(self.up_channel_arch), self.up_num_filters):
             if layer == len(self.up_channel_arch) - 1: # Needs to be altered to be the last layer and use out_features instead
                 self.up_sampling.append(
-                    Upsample(self.in_features, channels, num_conv_layers=filters)
+                    Upsample(channels, self.in_features, num_conv_layers=filters)
                 )
             else:
                 self.up_sampling.append(
-                    Upsample(self.channel_arch[layer], channels, num_conv_layers=filters)
+                    Upsample(channels, self.up_channel_arch[layer + 1], num_conv_layers=filters)
                 )
-
-        # print(self.up_sampling)
 
     def forward(self, x):        
         # Passing input through the downsampling layers
         for down in self.down_sampling:
             x, indices = down(x)
             self.pooling_indices.append(indices)
-            print(x.shape)
 
         self.reverse_indices = list(reversed(self.pooling_indices))
 
         for up, indices in zip(self.up_sampling, self.reverse_indices):
-            # print(up)
+            # Now passing through upsampling layers
             x = up(x, indices)
-            print(x.shape)
 
-        # for index, item in enumerate(self.pooling_indices):
-        #     print(f'Indices[{index}].shape: {torch.as_tensor(item).shape}')
-        # print(self.pooling_indices[0].shape)
+        x = F.softmax(x, dim=0)
 
+        return x
 
 def test_model():
-    input = torch.randn((1, 3, 512, 512))
+    input = torch.randn((2, 3, 512, 512))
     model = SegNet(in_features=3, out_features=1)
-    model(input)
+    result = model(input)
+    print(result.shape)
 
-    # Misc testing
-    # Upsample._map_indices(torch.randn((1, 64, 256, 256)), (1, 64, 512, 512), torch.randint(1, 262144, (1, 64, 256, 256)))
-    # test = Upsample(1, 3, (3, 512, 512), 3)
 
 if __name__ == '__main__':
     test_model()
