@@ -159,7 +159,7 @@ class SegNet(nn.Module):
         for (layer, channels), filters in zip(enumerate(self.up_channel_arch), self.up_num_filters):
             if layer == len(self.up_channel_arch) - 1: # Needs to be altered to be the last layer and use out_features instead
                 self.up_sampling.append(
-                    Upsample(channels, self.in_features, num_conv_layers=filters)
+                    Upsample(channels, self.out_features, num_conv_layers=filters)
                 )
             else:
                 self.up_sampling.append(
@@ -184,7 +184,7 @@ class SegNet(nn.Module):
 
 def test_model():
     input = torch.randn((2, 3, 512, 512))
-    model = SegNet(in_features=3, out_features=1)
+    model = SegNet(in_features=3, out_features=5)
     result = model(input)
     print(result.shape)
 
