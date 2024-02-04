@@ -1,3 +1,4 @@
 data/
 .venv/
 env/
+test/
