@@ -16,15 +16,16 @@ def clean_dataset(dir):
             image.save(os.path.join(dir, file[:-4] + ".png"), "PNG")
             os.remove(os.path.join(dir, file))
     
-    print(os.listdir(dir))
-
     files = glob.glob1(dir, "*.png")
     files = sorted(files, key=lambda x:float(re.findall("(\d+)",x)[0]))
     print(files)
     
     for file_num, file in enumerate(files):
-        os.rename(file, )
+        path = os.path.join(dir, file)
+        os.rename(path, os.path.join(dir, str(file_num) + file[file.index('_'):]))
+    
+    print(os.listdir(dir))
 
         
 
-clean_dataset("./test")
+clean_dataset("./test2")
