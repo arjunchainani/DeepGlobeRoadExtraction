@@ -32,6 +32,4 @@ def test():
     # print(dataset[0:5].shape)
 
 if __name__ == '__main__':
-    # test()
-
-    torchvision.transforms.v2()
+    test()
