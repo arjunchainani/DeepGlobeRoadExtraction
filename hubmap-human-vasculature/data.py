@@ -1,8 +1,8 @@
 import os
 import torch
-import torchvision
 from PIL import Image
 import numpy as np
+import cv2
 
 class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
     def __init__(self, img_dir, transforms=None, target_transforms=None):
@@ -53,12 +53,19 @@ class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
 
         return images, masks
 
+def visualize_data(image: torch.Tensor):
+    if image.shape[0] == 1:
+        image = torch.squeeze(image, dim=0)
+        cv2.imshow('Image', image.numpy())
+    else:
+        pass
 
 def test():
     dataset = DeepGlobeRoadExtractionDataset('data/train')
     # print(len(dataset))
     # print(dataset[0])
     test1, test2 = dataset[0]
+    visualize_data(test1)
     # print(dataset[0:5])
 
 
