@@ -11,45 +11,54 @@ class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
         self.target_transforms = target_transforms
 
         self.img_paths = []
+        self.mask_paths = []
 
-        print(len(os.listdir(self.img_dir)) / 2)
-
-        for i in range(len(os.listdir(self.img_dir))):
-            j = i / 2
-            if int(j) == j:
-                self.img_paths.append(os.path.join(self.img_dir, f'{int(j) + 1}_mask.png'))
-            else:
-                self.img_paths.append(os.path.join(self.img_dir, f'{int(j) + 1}_sat.png'))
+        for i in range(int(len(os.listdir(self.img_dir)) / 2)):
+            self.img_paths.append(os.path.join(self.img_dir, f'{int(i) + 1}_sat.png'))
+            self.mask_paths.append(os.path.join(self.img_dir, f'{int(i) + 1}_mask.png'))
 
     def __len__(self):
         return len([file for file in os.listdir(self.img_dir) if os.path.isfile(os.path.join(self.img_dir, file))])
 
     def __getitem__(self, idx):
-        print(f'-------- {self.img_paths[0]}')
         image_paths = self.img_paths[idx]
+        mask_paths = self.mask_paths[idx]
         images = []
+        masks = []
 
-        for path in image_paths:
-            image = Image.open(path)
-            image = np.array(image)
+        if type(idx) == int:
+            image = Image.open(self.img_paths[idx])
+            mask = Image.open(self.mask_paths[idx])
             images.append(image)
+            masks.append(mask)
+        else:
+            for img_path, mask_path in zip(image_paths, mask_paths):
+                image = Image.open(img_path)
+                image = np.array(image)
+                images.append(image)
+
+                mask = Image.open(mask_path)
+                mask = np.array(mask)
+                masks.append(mask)
 
         images = np.array(images)
         images = torch.tensor(images)
-        print(images.shape)
-        #
-        # if self.transforms:
-        #     image = self.transforms(image)
-        # if self.target_transforms:
-        #     mask = self.target_transforms(mask)
+        masks = np.array(masks)
+        masks = torch.tensor(masks)
 
-        return images
+        if self.transforms:
+            images = self.transforms(images)
+        if self.target_transforms:
+            masks = self.target_transforms(masks)
+
+        return images, masks
 
 
 def test():
     dataset = DeepGlobeRoadExtractionDataset('data/train')
     # print(len(dataset))
-    print(dataset[0])
+    # print(dataset[0])
+    test1, test2 = dataset[0]
     # print(dataset[0:5])
 
 
