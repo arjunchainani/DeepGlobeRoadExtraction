@@ -3,6 +3,7 @@ import torch
 from PIL import Image
 import numpy as np
 import cv2
+import time
 
 class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
     def __init__(self, img_dir, transforms=None, target_transforms=None):
@@ -57,6 +58,7 @@ def visualize_data(image: torch.Tensor):
     if image.shape[0] == 1:
         image = torch.squeeze(image, dim=0)
         cv2.imshow('Image', image.numpy())
+        time.sleep(20)
     else:
         pass
 
