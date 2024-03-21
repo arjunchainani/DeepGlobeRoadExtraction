@@ -57,6 +57,7 @@ class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
 def visualize_data(image: torch.Tensor):
     if image.shape[0] == 1:
         image = torch.squeeze(image, dim=0)
+        print(image.shape)
         cv2.imshow('Image', image.numpy())
         time.sleep(20)
     else:
@@ -68,7 +69,7 @@ def test():
     # print(dataset[0])
     test1, test2 = dataset[0]
     visualize_data(test1)
-    # print(dataset[0:5])
+    print(dataset[0:5])
 
 
 if __name__ == '__main__':
