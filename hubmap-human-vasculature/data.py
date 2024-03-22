@@ -69,6 +69,8 @@ def test():
     for image in test:
         print(image.shape)
 
+    print(len(dataset))
+
 if __name__ == '__main__':
     test()
     # print(len(os.listdir('./data/train')))

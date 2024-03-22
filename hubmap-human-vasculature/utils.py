@@ -33,7 +33,10 @@ def clean_dataset(dir):
 def get_dataloaders(
         img_dir, 
         transforms, 
-        target_transforms
+        target_transforms,
+        batch_size,
+        pin_memory,
+        num_workers
     ):
     '''
     Returns the train, validation, and test dataloaders
