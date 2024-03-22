@@ -65,12 +65,9 @@ def visualize_data(image: torch.Tensor):
 
 def test():
     dataset = DeepGlobeRoadExtractionDataset('data/train')
-    # print(len(dataset))
-    # print(dataset[0])
-    test1, test2 = dataset[0]
-    visualize_data(test1)
-    print(dataset[0:5])
-
+    test = dataset[0]
+    for image in test:
+        print(image.shape)
 
 if __name__ == '__main__':
     test()

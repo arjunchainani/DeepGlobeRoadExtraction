@@ -3,6 +3,8 @@ import glob
 import re
 import itertools
 from PIL import Image
+import torch
+from data import DeepGlobeRoadExtractionDataset
 
 def clean_dataset(dir):
     '''
@@ -28,6 +30,16 @@ def clean_dataset(dir):
     
     print(os.listdir(dir))
 
-        
+def get_dataloaders(
+        img_dir, 
+        transforms, 
+        target_transforms
+    ):
+    '''
+    Returns the train, validation, and test dataloaders
+    '''
+    train_dataset = DeepGlobeRoadExtractionDataset(img_dir, transforms, target_transforms)
 
-# clean_dataset("./data/train")
+if __name__ == "__main__":
+    pass
+    # clean_dataset("./data/train")
