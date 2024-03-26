@@ -31,7 +31,8 @@ def clean_dataset(dir):
     print(os.listdir(dir))
 
 def get_dataloaders(
-        img_dir, 
+        train_dir,
+        valid_dir, 
         transforms, 
         target_transforms,
         batch_size,
@@ -39,9 +40,25 @@ def get_dataloaders(
         num_workers
     ):
     '''
-    Returns the train, validation, and test dataloaders
+    Returns the train and validation dataloaders
     '''
-    train_dataset = DeepGlobeRoadExtractionDataset(img_dir, transforms, target_transforms)
+    train_dataset = DeepGlobeRoadExtractionDataset(img_dir=train_dir, transforms=transforms, target_transforms=target_transforms)
+    train_dl = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_size,
+        num_workers,
+        pin_memory,
+        shuffle=False
+    )
+
+    validation_dataset = DeepGlobeRoadExtractionDataset(img_dir=valid_dir)
+    validation_dl = torch.utils.data.DataLoader(
+        validation_dataset,
+        batch_size,
+        num_workers,
+        pin_memory,
+        shuffle=False
+    )
 
 if __name__ == "__main__":
     pass

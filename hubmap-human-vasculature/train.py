@@ -6,6 +6,7 @@ class HyperParameters():
     def __init__(self) -> None:
         self.DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.TRAIN_DIR = 'data/train'
+        self.VALID_DIR = 'data/valid'
         self.TEST_DIR = 'data/test'
         self.BATCH_SIZE = 44
         self.LEARNING_RATE = 1e-3
