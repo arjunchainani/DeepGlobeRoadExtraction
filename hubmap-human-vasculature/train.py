@@ -3,6 +3,7 @@ import torch.nn as nn
 from model import SegNet
 
 from tqdm import tqdm 
+from torchvision.transforms import v2
 
 class HyperParameters():
     def __init__(self) -> None:
@@ -43,3 +44,9 @@ def train(dl, model, optimizer, loss, scaler):
 
 def main():
     params = HyperParameters()
+
+    transforms = v2.Compose([
+        v2.Resize((params.ADJUSTED_IMAGE_HEIGHT, params.ADJUSTED_IMAGE_WIDTH)),
+        v2.RandomHorizontalFlip(p=1),
+        v2.ToDtype(torch.float32, scale=True),
+    ])
