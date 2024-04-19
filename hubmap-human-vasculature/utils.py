@@ -34,10 +34,10 @@ def get_dataloaders(
         train_dir,
         valid_dir, 
         transforms, 
-        target_transforms,
-        batch_size,
-        pin_memory,
-        num_workers
+        target_transforms=None,
+        batch_size=32,
+        pin_memory=False,
+        num_workers=4
     ):
     '''
     Returns the train and validation dataloaders
@@ -59,6 +59,8 @@ def get_dataloaders(
         pin_memory,
         shuffle=False
     )
+
+    return train_dl, validation_dl
 
 if __name__ == "__main__":
     pass

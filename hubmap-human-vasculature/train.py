@@ -4,6 +4,7 @@ from model import SegNet
 
 from tqdm import tqdm 
 from torchvision.transforms import v2
+import utils
 
 class HyperParameters():
     def __init__(self) -> None:
@@ -18,6 +19,7 @@ class HyperParameters():
         self.LOAD_MODEL = False
         self.PIN_MEMORY = True
         self.NUM_WORKERS = 4
+        self.NUM_EPOCHS = 3
     
 def train(dl, model, optimizer, loss, scaler):
     training_loop = tqdm(dl)
@@ -42,11 +44,37 @@ def train(dl, model, optimizer, loss, scaler):
 
         training_loop.set_postfix(loss=loss.item())
 
-def main():
+if __name__ == '__main__':
     params = HyperParameters()
 
+    # Needs to be fixed
     transforms = v2.Compose([
         v2.Resize((params.ADJUSTED_IMAGE_HEIGHT, params.ADJUSTED_IMAGE_WIDTH)),
         v2.RandomHorizontalFlip(p=1),
+        v2.Normalize(
+            mean=[0.0, 0.0, 0.0],
+            std=[1.0, 1.0, 1.0],
+            inplace=False,
+        ),
         v2.ToDtype(torch.float32, scale=True),
     ])
+
+    model = SegNet(in_features=3, out_features=1).to(params.DEVICE)
+    loss = nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=params.LEARNING_RATE)
+
+    train_dl, validation_dl = utils.get_dataloaders(
+        params.TRAIN_DIR,
+        params.VALID_DIR,
+        transforms,
+        batch_size=params.BATCH_SIZE,
+        pin_memory=params.PIN_MEMORY,
+        num_workers=params.NUM_WORKERS,
+    )
+
+    if params.LOAD_MODEL:
+        model.load_state_dict(torch.load('./checkpoints/current.pth.tar'))
+
+    scaler = torch.cuda.amp.GradScaler()
+    for epoch in range(params.NUM_EPOCHS):
+        train(train_dl, model, optimizer, loss, scaler)
