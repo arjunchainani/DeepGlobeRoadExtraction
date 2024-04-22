@@ -44,20 +44,20 @@ def get_dataloaders(
     '''
     train_dataset = DeepGlobeRoadExtractionDataset(img_dir=train_dir, transforms=transforms, target_transforms=target_transforms)
     train_dl = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size,
-        num_workers,
-        pin_memory,
-        shuffle=False
+        dataset=train_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+        sampler=None,
     )
 
     validation_dataset = DeepGlobeRoadExtractionDataset(img_dir=valid_dir)
     validation_dl = torch.utils.data.DataLoader(
-        validation_dataset,
-        batch_size,
-        num_workers,
-        pin_memory,
-        shuffle=False
+        dataset=validation_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+        sampler=None,
     )
 
     return train_dl, validation_dl

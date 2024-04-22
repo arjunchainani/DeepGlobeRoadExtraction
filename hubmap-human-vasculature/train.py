@@ -5,6 +5,7 @@ from model import SegNet
 
 from tqdm import tqdm 
 from torchvision.transforms import v2
+from torchmetrics.classification import Dice
 import utils
 
 class HyperParameters():
@@ -82,8 +83,22 @@ if __name__ == '__main__':
 
         torch.save(model, './checkpoints/current.pth.tar')
 
+        # Evaluating the dice score of the model 
+        dice = Dice(average='macro')
+        
+        model.eval()
+        with torch.no_grad():
+            for x, y in train_dl:
+                x = x.to(params.DEVICE)
+                y = y.to(params.DEVICE)
+                y_hat = model(x)
+
+                dice_score = dice(y_hat, y)
+
         # Tensorboard Summary Writer
         writer = SummaryWriter(comment=f'LR_{params.LEARNING_RATE}_BATCHSIZE_{params.BATCH_SIZE}')
         writer.add_scalar("Loss: ", loss, global_step=epoch)
+        writer.add_scalar("Dice Score: ", dice_score, global_step=epoch)
 
     writer.flush()
+    writer.close()
