@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
 from model import SegNet
 
 from tqdm import tqdm 
@@ -78,3 +79,11 @@ if __name__ == '__main__':
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(params.NUM_EPOCHS):
         train(train_dl, model, optimizer, loss, scaler)
+
+        torch.save(model, './checkpoints/current.pth.tar')
+
+        # Tensorboard Summary Writer
+        writer = SummaryWriter(comment=f'LR_{params.LEARNING_RATE}_BATCHSIZE_{params.BATCH_SIZE}')
+        writer.add_scalar("Loss: ", loss, global_step=epoch)
+
+    writer.flush()
