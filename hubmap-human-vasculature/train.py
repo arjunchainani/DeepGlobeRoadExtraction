@@ -8,6 +8,7 @@ from torchvision.transforms import v2
 from torchmetrics.classification import Dice
 import utils
 
+# Stores all the hyperparameters so that they can be easily altered during the training process
 class HyperParameters():
     def __init__(self) -> None:
         self.DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

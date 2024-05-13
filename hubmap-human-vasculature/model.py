@@ -1,5 +1,5 @@
 '''
-This is my version of SegNet, made in PyTorch
+This is my version of SegNet, implemented in PyTorch
 The original paper for SegNet can be found online, and it details the architecture behind this model
 '''
 import torch
@@ -157,7 +157,7 @@ class SegNet(nn.Module):
 
         # Upsampling part of SegNet
         for (layer, channels), filters in zip(enumerate(self.up_channel_arch), self.up_num_filters):
-            if layer == len(self.up_channel_arch) - 1: # Needs to be altered to be the last layer and use out_features instead
+            if layer == len(self.up_channel_arch) - 1: 
                 self.up_sampling.append(
                     Upsample(channels, self.out_features, num_conv_layers=filters)
                 )
