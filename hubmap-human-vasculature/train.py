@@ -4,6 +4,7 @@ from torch.utils.tensorboard import SummaryWriter
 from model import SegNet
 
 from tqdm import tqdm 
+import torchvision
 from torchvision.transforms import v2
 from torchmetrics.classification import Dice
 import utils
@@ -46,6 +47,18 @@ def train(dl, model, optimizer, loss, scaler):
         scaler.update()
 
         training_loop.set_postfix(loss=loss.item())
+
+def test_and_save(model, num_tests: int):
+    '''
+    Tests out the trained model on an image from the testing set
+    Returns the dice score and accuracy, and saves both the original image and the mask in the ./results directory
+    '''
+    with torch.no_grad():
+        for i in range(num_tests):
+            image_path = f'./data/test/{i}_sat.png'
+            image = torchvision.io.read_image(image_path)
+            result = model(image)
+            
 
 if __name__ == '__main__':
     params = HyperParameters()
