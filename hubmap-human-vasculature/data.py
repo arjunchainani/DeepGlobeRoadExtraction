@@ -43,18 +43,21 @@ class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
                 masks.append(mask)
 
         # Using min-max normalization for feature scaling
-        for image, mask in zip(images, masks):
+        for index, (image, mask) in enumerate(zip(images, masks)):
             image = torch.from_numpy(np.array(image, dtype=np.float32))
             mask = torch.from_numpy(np.array(mask, dtype=np.float32))
+#             print(mask)
             
             image_min, _ = torch.min(image, dim=-1, keepdim=True)
             image_max, _ = torch.max(image, dim=-1, keepdim=True)
-            image = (image - image_min) / (image_max - image_min)
+            images[index] = (image - image_min) / (image_max - image_min)
+#             print(image)
             
             mask_min, _ = torch.min(mask, dim=-1, keepdim=True)
             mask_max, _ = torch.max(mask, dim=-1, keepdim=True)
-            mask = (mask - mask_min) / (mask_max - mask_min)
+            masks[index] = (mask - mask_min) / (mask_max - mask_min)
             
+#         print(masks[0])
         images = torch.from_numpy(np.array(images, dtype=np.float32))
         masks = torch.from_numpy(np.array(masks, dtype=np.float32))
 
