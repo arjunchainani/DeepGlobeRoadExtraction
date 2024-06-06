@@ -42,10 +42,21 @@ class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
                 mask = np.array(mask)
                 masks.append(mask)
 
-        images = np.array(images)
-        images = torch.tensor(images)
-        masks = np.array(masks)
-        masks = torch.tensor(masks)
+        # Using min-max normalization for feature scaling
+        for image, mask in zip(images, masks):
+            image = torch.from_numpy(np.array(image, dtype=np.float32))
+            mask = torch.from_numpy(np.array(mask, dtype=np.float32))
+            
+            image_min, _ = torch.min(image, dim=-1, keepdim=True)
+            image_max, _ = torch.max(image, dim=-1, keepdim=True)
+            image = (image - image_min) / (image_max - image_min)
+            
+            mask_min, _ = torch.min(mask, dim=-1, keepdim=True)
+            mask_max, _ = torch.max(mask, dim=-1, keepdim=True)
+            mask = (mask - mask_min) / (mask_max - mask_min)
+            
+        images = torch.from_numpy(np.array(images, dtype=np.float32))
+        masks = torch.from_numpy(np.array(masks, dtype=np.float32))
 
         if self.transforms:
             images = self.transforms(images)
