@@ -14,6 +14,8 @@ class ConvBlock(nn.Module):
         self.out_features = out_features
         self.num_conv_layers = num_conv_layers
 
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
         self.convs = nn.ModuleList()
 
         # Initial convolution layer - maps in_features to out_features
@@ -53,6 +55,8 @@ class ConvBlock(nn.Module):
         )
     
     def forward(self, x):
+        x = x.to(self.device)
+        
         for module in self.convs:
             x = module(x)
 

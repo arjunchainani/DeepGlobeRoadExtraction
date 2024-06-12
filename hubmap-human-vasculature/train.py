@@ -27,9 +27,11 @@ class HyperParameters():
         self.NUM_EPOCHS = 3
     
 def train(dl, model, optimizer, loss, scaler):
-    def train(dl, model, optimizer, loss, scaler):
     params = HyperParameters()
     
+    if torch.cuda.is_available():
+        model = model.cuda()
+
     train_dataset = DeepGlobeRoadExtractionDataset(img_dir=params.TRAIN_DIR, transforms=None, target_transforms=None)
     dl = torch.utils.data.DataLoader(train_dataset, batch_size=44, shuffle=False)
     
