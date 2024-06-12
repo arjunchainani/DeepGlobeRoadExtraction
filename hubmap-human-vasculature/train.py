@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from model import SegNet
 
+import numpy as np
 from tqdm import tqdm 
 import torchvision
 from torchvision.transforms import v2
@@ -26,25 +27,44 @@ class HyperParameters():
         self.NUM_EPOCHS = 3
     
 def train(dl, model, optimizer, loss, scaler):
-    training_loop = tqdm(dl)
+    def train(dl, model, optimizer, loss, scaler):
     params = HyperParameters()
+    
+    train_dataset = DeepGlobeRoadExtractionDataset(img_dir=params.TRAIN_DIR, transforms=None, target_transforms=None)
+    dl = torch.utils.data.DataLoader(train_dataset, batch_size=44, shuffle=False)
+    
+    training_loop = tqdm(dl)
 
-    for batch_num, (images, real_masks) in enumerate(training_loop):
+#     print(type(training_loop))
+    
+    for feature in training_loop:
+        images, real_masks = feature
         images = images.to(params.DEVICE)
+        images = torch.squeeze(images, 1)
+        
+        images = images.cpu().detach().numpy()
+        images = np.transpose(images, (0, 3, 1, 2))
+        images = torch.from_numpy(images)
+        
         real_masks = real_masks.to(params.DEVICE)
-
+        
         if params.DEVICE == 'cuda':
             with torch.cuda.amp.autocast():
                 pred_masks = model(images)
                 loss = loss(pred_masks, real_masks)
+                
+                optimizer.zero_grad()
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
         else:
             pred_masks = model(images)
             loss = loss(pred_masks, real_masks)
-        
-        optimizer.zero_grad()
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+            
+            optimizer.zero_grad()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
         training_loop.set_postfix(loss=loss.item())
 
