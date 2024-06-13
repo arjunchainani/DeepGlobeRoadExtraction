@@ -17,7 +17,7 @@ class HyperParameters():
         self.TRAIN_DIR = 'data/train'
         self.VALID_DIR = 'data/valid'
         self.TEST_DIR = 'data/test'
-        self.BATCH_SIZE = 44
+        self.BATCH_SIZE = 11
         self.LEARNING_RATE = 1e-3
         self.ADJUSTED_IMAGE_WIDTH = 512
         self.ADJUSTED_IMAGE_HEIGHT = 512
@@ -29,8 +29,7 @@ class HyperParameters():
 def train(dl, model, optimizer, loss, scaler):
     params = HyperParameters()
     
-    if torch.cuda.is_available():
-        model = model.cuda()
+    model = model.cuda() if torch.cuda.is_available() else model
 
     train_dataset = DeepGlobeRoadExtractionDataset(img_dir=params.TRAIN_DIR, transforms=None, target_transforms=None)
     dl = torch.utils.data.DataLoader(train_dataset, batch_size=44, shuffle=False)
@@ -50,23 +49,16 @@ def train(dl, model, optimizer, loss, scaler):
         
         real_masks = real_masks.to(params.DEVICE)
         
-        if params.DEVICE == 'cuda':
-            with torch.cuda.amp.autocast():
-                pred_masks = model(images)
-                loss = loss(pred_masks, real_masks)
-                
-                optimizer.zero_grad()
-                scaler.scale(loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
-        else:
+        with torch.cuda.amp.autocast():
             pred_masks = model(images)
             loss = loss(pred_masks, real_masks)
             
-            optimizer.zero_grad()
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+        optimizer.zero_grad()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+
+        torch.cuda.empty_cache()
 
         training_loop.set_postfix(loss=loss.item())
 
