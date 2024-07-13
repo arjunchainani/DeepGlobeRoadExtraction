@@ -1,7 +1,0 @@
-data/
-.venv/
-env/
-test/
-runs/
-checkpoints/
-deepglobe.zip
