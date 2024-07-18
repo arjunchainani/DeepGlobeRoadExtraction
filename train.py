@@ -51,16 +51,16 @@ def train(dl, model, optimizer, loss, scaler):
         
         with torch.cuda.amp.autocast():
             pred_masks = model(images)
-            loss = loss(pred_masks, real_masks)
+            loss_val = loss(pred_masks, real_masks)
             
         optimizer.zero_grad()
-        scaler.scale(loss).backward()
+        scaler.scale(loss_val).backward()
         scaler.step(optimizer)
         scaler.update()
 
         torch.cuda.empty_cache()
 
-        training_loop.set_postfix(loss=loss.item())
+        training_loop.set_postfix(loss=loss_val.item())
 
 def test_and_save(model, num_tests: int):
     '''
@@ -112,16 +112,20 @@ if __name__ == '__main__':
         torch.save(model, './checkpoints/current.pth.tar')
 
         # Evaluating the dice score of the model 
-        dice = Dice(average='macro')
+        dice = Dice(average='macro', num_classes=2)
         
         model.eval()
         with torch.no_grad():
             for x, y in train_dl:
                 x = x.to(params.DEVICE)
                 y = y.to(params.DEVICE)
+
+                x = x.reshape((params.BATCH_SIZE, 3, 1024, 1024))
+                y = y.reshape((params.BATCH_SIZE, 1, 1024, 1024))
+
                 y_hat = model(x)
 
-                dice_score = dice(y_hat, y)
+                dice_score = dice(y_hat, y.int())
 
         # Tensorboard Summary Writer
         writer = SummaryWriter(comment=f'LR_{params.LEARNING_RATE}_BATCHSIZE_{params.BATCH_SIZE}')

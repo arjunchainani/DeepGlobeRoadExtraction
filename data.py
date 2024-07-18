@@ -1,6 +1,6 @@
 import os
 import torch
-from PIL import Image
+from PIL import Image, ImageOps
 import numpy as np
 import cv2
 import time
@@ -28,8 +28,10 @@ class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
         masks = []
 
         if type(idx) == int:
-            image = Image.open(self.img_paths[idx])
+            image = Image.open(self.img_paths[idx]).convert('RGB')
             mask = Image.open(self.mask_paths[idx])
+            mask = ImageOps.grayscale(mask)
+
             images.append(image)
             masks.append(mask)
         else:
@@ -39,6 +41,7 @@ class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
                 images.append(image)
 
                 mask = Image.open(mask_path)
+                mask = ImageOps.grayscale(mask)
                 mask = np.array(mask)
                 masks.append(mask)
 
@@ -57,10 +60,13 @@ class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
         images = torch.from_numpy(np.array(images, dtype=np.float32))
         masks = torch.from_numpy(np.array(masks, dtype=np.float32))
 
-        if self.transforms:
-            images = self.transforms(images)
-        if self.target_transforms:
-            masks = self.target_transforms(masks)
+        # if self.transforms:
+        #     images = self.transforms(images)
+        # if self.target_transforms:
+        #     masks = self.target_transforms(masks)
+
+        images = torch.squeeze(images) if images.shape[0] == 1 else images
+        masks = torch.squeeze(masks) if masks.shape[0] == 1 else masks
 
         return images, masks
 
