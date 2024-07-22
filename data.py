@@ -60,10 +60,12 @@ class DeepGlobeRoadExtractionDataset(torch.utils.data.Dataset):
         images = torch.from_numpy(np.array(images, dtype=np.float32))
         masks = torch.from_numpy(np.array(masks, dtype=np.float32))
 
-        # if self.transforms:
-        #     images = self.transforms(images)
-        # if self.target_transforms:
-        #     masks = self.target_transforms(masks)
+        images = torch.stack([image.reshape((image.shape[-1], image.shape[-3], image.shape[-2])) for image in images], dim=0)
+        masks = torch.stack([mask.reshape((mask.shape[-1], mask.shape[-3], mask.shape[-2])) for mask in torch.unsqueeze(masks, dim=-1)], dim=0)
+
+        if self.transforms:
+            images = self.transforms(images)
+            masks = self.transforms(masks)
 
         images = torch.squeeze(images) if images.shape[0] == 1 else images
         masks = torch.squeeze(masks) if masks.shape[0] == 1 else masks

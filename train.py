@@ -26,12 +26,12 @@ class HyperParameters():
         self.NUM_WORKERS = 4
         self.NUM_EPOCHS = 3
     
-def train(dl, model, optimizer, loss, scaler):
+def train(dl, model, optimizer, loss, scaler, transforms):
     params = HyperParameters()
     
     model = model.cuda() if torch.cuda.is_available() else model
 
-    train_dataset = DeepGlobeRoadExtractionDataset(img_dir=params.TRAIN_DIR, transforms=None, target_transforms=None)
+    train_dataset = DeepGlobeRoadExtractionDataset(img_dir=params.TRAIN_DIR, transforms=transforms, target_transforms=None)
     dl = torch.utils.data.DataLoader(train_dataset, batch_size=44, shuffle=False)
     
     training_loop = tqdm(dl)
@@ -39,14 +39,10 @@ def train(dl, model, optimizer, loss, scaler):
 #     print(type(training_loop))
     
     for feature in training_loop:
+        torch.cuda.empty_cache()
+        
         images, real_masks = feature
         images = images.to(params.DEVICE)
-        images = torch.squeeze(images, 1)
-        
-        images = images.cpu().detach().numpy()
-        images = np.transpose(images, (0, 3, 1, 2))
-        images = torch.from_numpy(images)
-        
         real_masks = real_masks.to(params.DEVICE)
         
         with torch.cuda.amp.autocast():
@@ -80,12 +76,6 @@ if __name__ == '__main__':
     # Needs to be fixed
     transforms = v2.Compose([
         v2.Resize((params.ADJUSTED_IMAGE_HEIGHT, params.ADJUSTED_IMAGE_WIDTH)),
-        v2.RandomHorizontalFlip(p=1),
-        v2.Normalize(
-            mean=[0.0, 0.0, 0.0],
-            std=[1.0, 1.0, 1.0],
-            inplace=False,
-        ),
         v2.ToDtype(torch.float32, scale=True),
     ])
 
@@ -107,7 +97,7 @@ if __name__ == '__main__':
 
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(params.NUM_EPOCHS):
-        train(train_dl, model, optimizer, loss, scaler)
+        train(train_dl, model, optimizer, loss, scaler, transforms)
 
         torch.save(model, './checkpoints/current.pth.tar')
 
