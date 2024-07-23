@@ -1,3 +1,4 @@
+import gc
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
@@ -39,8 +40,6 @@ def train(dl, model, optimizer, loss, scaler, transforms):
 #     print(type(training_loop))
     
     for feature in training_loop:
-        torch.cuda.empty_cache()
-        
         images, real_masks = feature
         images = images.to(params.DEVICE)
         real_masks = real_masks.to(params.DEVICE)
@@ -48,6 +47,10 @@ def train(dl, model, optimizer, loss, scaler, transforms):
         with torch.cuda.amp.autocast():
             pred_masks = model(images)
             loss_val = loss(pred_masks, real_masks)
+
+            del images, real_masks, pred_masks
+            gc.collect()
+            torch.cuda.empty_cache()
             
         optimizer.zero_grad()
         scaler.scale(loss_val).backward()
